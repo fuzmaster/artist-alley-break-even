@@ -9,7 +9,7 @@ export function Header() {
       </h1>
       <p className="max-w-2xl text-sm text-slate-300 sm:text-base">
         Find out how many prints, charms, stickers, or commissions you need to
-        sell before the con makes you lose money.
+        sell to avoid losing money at the con.
       </p>
     </header>
   )

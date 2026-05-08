@@ -12,7 +12,7 @@ import { loadCalculatorState, saveCalculatorState } from './lib/localStorage'
 import { buildShareText } from './lib/shareText'
 import type { CalculatorState } from './types/calculator'
 
-const unrealisticSalesPerHourThreshold = 8
+const UNREALISTIC_SALES_PER_HOUR_THRESHOLD = 8
 const fieldsWithMinimumOne: Array<keyof CalculatorState> = [
   'roommateCount',
   'conDays',
@@ -59,7 +59,7 @@ function App() {
 
   const showUnrealisticPaceWarning =
     !results.hasInvalidProfit &&
-    results.salesPerHour >= unrealisticSalesPerHourThreshold
+    results.salesPerHour >= UNREALISTIC_SALES_PER_HOUR_THRESHOLD
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
