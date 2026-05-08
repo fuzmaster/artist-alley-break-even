@@ -10,7 +10,6 @@ type ProductInputsProps = {
     field: Exclude<keyof CalculatorState, 'conName' | 'productName'>,
     value: number,
   ) => void
-  onProductNameChange: (field: 'productName', value: string) => void
   onPresetSelect: (
     productName: string,
     averageSalePrice: number,
@@ -22,7 +21,6 @@ export function ProductInputs({
   state,
   profitPerItem,
   onChange,
-  onProductNameChange,
   onPresetSelect,
 }: ProductInputsProps) {
   return (
