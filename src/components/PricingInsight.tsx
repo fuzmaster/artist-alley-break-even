@@ -17,12 +17,14 @@ export function PricingInsight({
     return null
   }
 
-  const buildMessage = (priceIncrease: number, adjustedBreakEven: number): string => {
-    if (adjustedBreakEven < breakEvenUnits) {
-      return `If you raise your price by $${priceIncrease}, your break-even target drops from ${breakEvenUnits} to ${adjustedBreakEven}.`
-    }
+  const improvements = [
+    { priceIncrease: 1, adjustedBreakEven: breakEvenAtOneDollarMore },
+    { priceIncrease: 3, adjustedBreakEven: breakEvenAtThreeDollarsMore },
+    { priceIncrease: 5, adjustedBreakEven: breakEvenAtFiveDollarsMore },
+  ].filter(({ adjustedBreakEven }) => adjustedBreakEven > 0 && adjustedBreakEven < breakEvenUnits)
 
-    return `If you raise your price by $${priceIncrease}, your break-even target stays at ${adjustedBreakEven}.`
+  if (improvements.length === 0) {
+    return null
   }
 
   return (
@@ -31,9 +33,12 @@ export function PricingInsight({
         Pricing Insight
       </p>
       <div className="mt-2 space-y-1">
-        <p>{buildMessage(1, breakEvenAtOneDollarMore)}</p>
-        <p>{buildMessage(3, breakEvenAtThreeDollarsMore)}</p>
-        <p>{buildMessage(5, breakEvenAtFiveDollarsMore)}</p>
+        {improvements.map(({ priceIncrease, adjustedBreakEven }) => (
+          <p key={priceIncrease}>
+            If you raise your price by ${priceIncrease}, your break-even target drops from{' '}
+            {breakEvenUnits} to {adjustedBreakEven}.
+          </p>
+        ))}
       </div>
     </section>
   )

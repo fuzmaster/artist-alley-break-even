@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Header } from './components/Header'
 import { ResultCard } from './components/ResultCard'
 import { CostInputs } from './components/CostInputs'
@@ -13,9 +13,11 @@ import { defaultState } from './lib/defaultState'
 import { loadCalculatorState, saveCalculatorState } from './lib/localStorage'
 import { sanitizeState } from './lib/sanitizeState'
 import { buildShareText } from './lib/shareText'
+import { trackEvent } from './lib/analytics'
 import type { CalculatorState } from './types/calculator'
 
 const UNREALISTIC_SALES_PER_HOUR_THRESHOLD = 8
+const HIGH_RISK_LEVEL = 'HIGH RISK'
 type NumericField = Exclude<keyof CalculatorState, 'conName' | 'productName'>
 
 function App() {
@@ -24,8 +26,25 @@ function App() {
     return saved ? sanitizeState(saved) : defaultState
   })
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
+  const hasTrackedHighRiskRef = useRef(false)
 
   const results = useMemo(() => calculateResults(state), [state])
+
+  useEffect(() => {
+    if (results.riskLevel === HIGH_RISK_LEVEL && !hasTrackedHighRiskRef.current) {
+      trackEvent('high_risk_result', {
+        salesPerHour: results.salesPerHour,
+        requiredProfitPerHour: results.requiredProfitPerHour,
+        breakEvenUnits: results.breakEvenUnits,
+      })
+      hasTrackedHighRiskRef.current = true
+      return
+    }
+
+    if (results.riskLevel !== HIGH_RISK_LEVEL) {
+      hasTrackedHighRiskRef.current = false
+    }
+  }, [results.breakEvenUnits, results.requiredProfitPerHour, results.riskLevel, results.salesPerHour])
 
   const updateNumberField = (field: NumericField, value: number) => {
     setState((prev) => {
@@ -52,7 +71,36 @@ function App() {
     })
   }
 
+  const handlePresetSelect = (
+    productName: string,
+    averageSalePrice: number,
+    averageItemCost: number,
+  ) => {
+    trackEvent('preset_selected', {
+      productName,
+      averageSalePrice,
+      averageItemCost,
+    })
+
+    setState((prev) => {
+      const nextState = sanitizeState({
+        ...prev,
+        productName,
+        averageSalePrice,
+        averageItemCost,
+      })
+      saveCalculatorState(nextState)
+      return nextState
+    })
+  }
+
   const handleCopySummary = async () => {
+    trackEvent('copy_summary_clicked', {
+      conName: state.conName,
+      productName: state.productName,
+      breakEvenUnits: results.breakEvenUnits,
+    })
+
     const shareText = buildShareText(state, results)
 
     try {
@@ -64,6 +112,8 @@ function App() {
   }
 
   const handleReset = () => {
+    trackEvent('reset_clicked')
+
     const nextState = sanitizeState(defaultState)
     setState(nextState)
     saveCalculatorState(nextState)
@@ -122,6 +172,7 @@ function App() {
               profitPerItem={results.profitPerItem}
               onChange={updateNumberField}
               onProductNameChange={updateTextField}
+              onPresetSelect={handlePresetSelect}
             />
             <SellingTimeInputs
               state={state}
@@ -153,6 +204,7 @@ function App() {
               upfrontCashNeeded={results.upfrontCashNeeded}
               requiredProfitPerHour={results.requiredProfitPerHour}
               hasInvalidProfit={results.hasInvalidProfit}
+              riskLevel={results.riskLevel}
             />
             <ShareCard
               conName={state.conName}
@@ -184,9 +236,21 @@ function App() {
           </div>
         </div>
 
+        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+          <h2 className="text-lg font-semibold text-white">Quick Artist Alley Pricing Rules</h2>
+          <ul className="mt-3 space-y-2 text-sm text-slate-300">
+            <li>• Low-margin items need volume.</li>
+            <li>• High table costs require higher-price items or bundles.</li>
+            <li>• Track profit, not just revenue.</li>
+            <li>• If your required sales per hour feels impossible, skip the con or raise prices.</li>
+          </ul>
+        </section>
+
         <footer className="border-t border-slate-800 pt-4 text-xs text-slate-400">
-          This calculator is an estimate based on your inputs and is not
-          financial advice.
+          <div className="space-y-1">
+            <p>This calculator is an estimate based on your inputs and is not financial advice.</p>
+            <p>Jacob Britten 2026 jacobbritten.com</p>
+          </div>
         </footer>
       </main>
     </div>

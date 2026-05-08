@@ -1,10 +1,26 @@
-import type { CalculationResults, CalculatorState } from '../types/calculator'
+import type { CalculationResults, CalculatorState, RiskLevel } from '../types/calculator'
 
 const safeDivisor = (value: number, fallback = 1): number =>
   value > 0 ? value : fallback
 
 const safeRound = (value: number): number =>
   Number.isFinite(value) ? Number.parseFloat(value.toFixed(2)) : 0
+
+const getRiskLevel = (salesPerHour: number, hasInvalidProfit: boolean): RiskLevel | null => {
+  if (hasInvalidProfit) {
+    return null
+  }
+
+  if (salesPerHour < 2) {
+    return 'LOW RISK'
+  }
+
+  if (salesPerHour < 6) {
+    return 'MEDIUM RISK'
+  }
+
+  return 'HIGH RISK'
+}
 
 export const calculateResults = (state: CalculatorState): CalculationResults => {
   const roommateCount = safeDivisor(state.roommateCount)
@@ -48,6 +64,7 @@ export const calculateResults = (state: CalculatorState): CalculationResults => 
     breakEvenUnits > 0 && totalSellingHours > 0
       ? breakEvenUnits / totalSellingHours
       : 0
+  const roundedSalesPerHour = safeRound(salesPerHour)
 
   return {
     fixedCosts: safeRound(fixedCosts),
@@ -59,8 +76,9 @@ export const calculateResults = (state: CalculatorState): CalculationResults => 
     breakEvenAtThreeDollarsMore,
     breakEvenAtFiveDollarsMore,
     salesPerDay: safeRound(salesPerDay),
-    salesPerHour: safeRound(salesPerHour),
+    salesPerHour: roundedSalesPerHour,
     totalSellingHours: safeRound(totalSellingHours),
     hasInvalidProfit,
+    riskLevel: getRiskLevel(roundedSalesPerHour, hasInvalidProfit),
   }
 }

@@ -1,7 +1,7 @@
-import { NumberInput } from './NumberInput'
 import { PresetButtons } from './PresetButtons'
 import { formatCurrency } from '../lib/formatCurrency'
 import type { CalculatorState } from '../types/calculator'
+import { NumberInput } from './NumberInput'
 
 type ProductInputsProps = {
   state: CalculatorState
@@ -11,6 +11,11 @@ type ProductInputsProps = {
     value: number,
   ) => void
   onProductNameChange: (field: 'productName', value: string) => void
+  onPresetSelect: (
+    productName: string,
+    averageSalePrice: number,
+    averageItemCost: number,
+  ) => void
 }
 
 export function ProductInputs({
@@ -18,17 +23,12 @@ export function ProductInputs({
   profitPerItem,
   onChange,
   onProductNameChange,
+  onPresetSelect,
 }: ProductInputsProps) {
   return (
     <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
       <h2 className="text-lg font-semibold text-white">Product Economics</h2>
-      <PresetButtons
-        onSelect={(productName, averageSalePrice, averageItemCost) => {
-          onProductNameChange('productName', productName)
-          onChange('averageSalePrice', averageSalePrice)
-          onChange('averageItemCost', averageItemCost)
-        }}
-      />
+      <PresetButtons onSelect={onPresetSelect} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <NumberInput id="averageSalePrice" label="Average item sale price" value={state.averageSalePrice} min={0} step={0.01} onChange={(value) => onChange('averageSalePrice', value)} />
         <NumberInput id="averageItemCost" label="Average cost to make item" value={state.averageItemCost} min={0} step={0.01} onChange={(value) => onChange('averageItemCost', value)} />
