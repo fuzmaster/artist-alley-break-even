@@ -28,6 +28,9 @@ export type CalculationResults = {
   profitPerItem: number
   requiredProfitPerHour: number
   breakEvenUnits: number
+  breakEvenAtOneDollarMore: number
+  breakEvenAtThreeDollarsMore: number
+  breakEvenAtFiveDollarsMore: number
   salesPerDay: number
   salesPerHour: number
   totalSellingHours: number

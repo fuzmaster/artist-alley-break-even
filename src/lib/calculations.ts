@@ -11,6 +11,7 @@ export const calculateResults = (state: CalculatorState): CalculationResults => 
   const conDays = safeDivisor(state.conDays)
   const alleyHoursPerDay = safeDivisor(state.alleyHoursPerDay)
 
+  // Fixed costs are the convention/event expenses you must recoup from sales.
   const fixedCosts =
     state.tableFee +
     state.badgeCost +
@@ -19,13 +20,26 @@ export const calculateResults = (state: CalculatorState): CalculationResults => 
     state.foodCost +
     state.displayCost +
     state.emergencyBuffer
+  // Upfront cash includes fixed costs plus inventory cash paid before the event.
   const upfrontCashNeeded = fixedCosts + state.inventoryCost
 
+  // Profit per item is sale price minus item cost, used for break-even math.
   const profitPerItem = state.averageSalePrice - state.averageItemCost
   const hasInvalidProfit = profitPerItem <= 0
 
+  // Break-even units are how many items you must sell to recover fixed costs.
   const breakEvenUnits =
     hasInvalidProfit || fixedCosts <= 0 ? 0 : Math.ceil(fixedCosts / profitPerItem)
+  const breakEvenWithPriceIncrease = (priceIncrease: number): number => {
+    const increasedProfit = state.averageSalePrice + priceIncrease - state.averageItemCost
+
+    return increasedProfit > 0 && fixedCosts > 0
+      ? Math.ceil(fixedCosts / increasedProfit)
+      : 0
+  }
+  const breakEvenAtOneDollarMore = breakEvenWithPriceIncrease(1)
+  const breakEvenAtThreeDollarsMore = breakEvenWithPriceIncrease(3)
+  const breakEvenAtFiveDollarsMore = breakEvenWithPriceIncrease(5)
   const totalSellingHours = conDays * alleyHoursPerDay
   const requiredProfitPerHour = fixedCosts / safeDivisor(totalSellingHours)
 
@@ -41,6 +55,9 @@ export const calculateResults = (state: CalculatorState): CalculationResults => 
     profitPerItem: safeRound(profitPerItem),
     requiredProfitPerHour: safeRound(requiredProfitPerHour),
     breakEvenUnits,
+    breakEvenAtOneDollarMore,
+    breakEvenAtThreeDollarsMore,
+    breakEvenAtFiveDollarsMore,
     salesPerDay: safeRound(salesPerDay),
     salesPerHour: safeRound(salesPerHour),
     totalSellingHours: safeRound(totalSellingHours),
