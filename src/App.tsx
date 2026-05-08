@@ -171,7 +171,6 @@ function App() {
               state={state}
               profitPerItem={results.profitPerItem}
               onChange={updateNumberField}
-              onProductNameChange={updateTextField}
               onPresetSelect={handlePresetSelect}
             />
             <SellingTimeInputs
