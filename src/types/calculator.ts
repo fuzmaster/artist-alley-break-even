@@ -22,6 +22,8 @@ export type ProductPreset = {
   averageItemCost: number
 }
 
+export type RiskLevel = 'LOW RISK' | 'MEDIUM RISK' | 'HIGH RISK'
+
 export type CalculationResults = {
   fixedCosts: number
   upfrontCashNeeded: number
@@ -35,4 +37,5 @@ export type CalculationResults = {
   salesPerHour: number
   totalSellingHours: number
   hasInvalidProfit: boolean
+  riskLevel: RiskLevel | null
 }
