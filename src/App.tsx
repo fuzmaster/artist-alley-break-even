@@ -5,6 +5,8 @@ import { CostInputs } from './components/CostInputs'
 import { ProductInputs } from './components/ProductInputs'
 import { SellingTimeInputs } from './components/SellingTimeInputs'
 import { ShareSummary } from './components/ShareSummary'
+import { ShareCard } from './components/ShareCard'
+import { PricingInsight } from './components/PricingInsight'
 import { WarningBox } from './components/WarningBox'
 import { calculateResults } from './lib/calculations'
 import { defaultState } from './lib/defaultState'
@@ -142,7 +144,7 @@ function App() {
             ) : null}
           </section>
 
-          <div className="order-1 lg:order-2 lg:sticky lg:top-6">
+          <div className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-6">
             <ResultCard
               productName={state.productName}
               breakEvenUnits={results.breakEvenUnits}
@@ -152,6 +154,33 @@ function App() {
               requiredProfitPerHour={results.requiredProfitPerHour}
               hasInvalidProfit={results.hasInvalidProfit}
             />
+            <ShareCard
+              conName={state.conName}
+              productName={state.productName}
+              breakEvenUnits={results.breakEvenUnits}
+              salesPerDay={results.salesPerDay}
+              salesPerHour={results.salesPerHour}
+              requiredProfitPerHour={results.requiredProfitPerHour}
+              upfrontCashNeeded={results.upfrontCashNeeded}
+              profitPerItem={results.profitPerItem}
+              hasInvalidProfit={results.hasInvalidProfit}
+            />
+            <PricingInsight
+              breakEvenUnits={results.breakEvenUnits}
+              breakEvenAtOneDollarMore={results.breakEvenAtOneDollarMore}
+              breakEvenAtThreeDollarsMore={results.breakEvenAtThreeDollarsMore}
+              breakEvenAtFiveDollarsMore={results.breakEvenAtFiveDollarsMore}
+              profitPerItem={results.profitPerItem}
+            />
+            <section className="rounded-2xl border border-slate-700 bg-slate-900/80 p-5 text-sm text-slate-200">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Why inventory is separate from break-even math
+              </p>
+              <div className="mt-2 space-y-1">
+                <p>Item cost is already counted in profit per sale, so break-even units use your fixed costs only.</p>
+                <p>Inventory cash is still real money you need upfront before the event starts.</p>
+              </div>
+            </section>
           </div>
         </div>
 
