@@ -32,6 +32,7 @@ export function NumberInput({
       <input
         id={id}
         type="number"
+        inputMode="decimal"
         min={min}
         step={step}
         value={value}

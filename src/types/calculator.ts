@@ -1,4 +1,6 @@
 export type CalculatorState = {
+  conName: string
+  productName: string
   tableFee: number
   badgeCost: number
   hotelCost: number
@@ -21,8 +23,10 @@ export type ProductPreset = {
 }
 
 export type CalculationResults = {
-  totalCost: number
+  fixedCosts: number
+  upfrontCashNeeded: number
   profitPerItem: number
+  requiredProfitPerHour: number
   breakEvenUnits: number
   salesPerDay: number
   salesPerHour: number

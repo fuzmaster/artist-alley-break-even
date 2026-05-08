@@ -6,15 +6,25 @@ import type { CalculatorState } from '../types/calculator'
 type ProductInputsProps = {
   state: CalculatorState
   profitPerItem: number
-  onChange: (field: keyof CalculatorState, value: number) => void
+  onChange: (
+    field: Exclude<keyof CalculatorState, 'conName' | 'productName'>,
+    value: number,
+  ) => void
+  onProductNameChange: (field: 'productName', value: string) => void
 }
 
-export function ProductInputs({ state, profitPerItem, onChange }: ProductInputsProps) {
+export function ProductInputs({
+  state,
+  profitPerItem,
+  onChange,
+  onProductNameChange,
+}: ProductInputsProps) {
   return (
     <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
       <h2 className="text-lg font-semibold text-white">Product Economics</h2>
       <PresetButtons
-        onSelect={(averageSalePrice, averageItemCost) => {
+        onSelect={(productName, averageSalePrice, averageItemCost) => {
+          onProductNameChange('productName', productName)
           onChange('averageSalePrice', averageSalePrice)
           onChange('averageItemCost', averageItemCost)
         }}

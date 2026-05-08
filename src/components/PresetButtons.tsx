@@ -1,7 +1,11 @@
 import { productPresets } from '../data/productPresets'
 
 type PresetButtonsProps = {
-  onSelect: (averageSalePrice: number, averageItemCost: number) => void
+  onSelect: (
+    productName: string,
+    averageSalePrice: number,
+    averageItemCost: number,
+  ) => void
 }
 
 export function PresetButtons({ onSelect }: PresetButtonsProps) {
@@ -13,7 +17,9 @@ export function PresetButtons({ onSelect }: PresetButtonsProps) {
           <button
             key={preset.label}
             type="button"
-            onClick={() => onSelect(preset.averageSalePrice, preset.averageItemCost)}
+            onClick={() =>
+              onSelect(preset.label, preset.averageSalePrice, preset.averageItemCost)
+            }
             className="rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-xs font-medium text-slate-100 transition hover:border-fuchsia-400 hover:text-fuchsia-200"
           >
             <span className="block">{preset.label}</span>

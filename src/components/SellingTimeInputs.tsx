@@ -4,7 +4,10 @@ import type { CalculatorState } from '../types/calculator'
 type SellingTimeInputsProps = {
   state: CalculatorState
   totalSellingHours: number
-  onChange: (field: keyof CalculatorState, value: number) => void
+  onChange: (
+    field: Exclude<keyof CalculatorState, 'conName' | 'productName'>,
+    value: number,
+  ) => void
 }
 
 export function SellingTimeInputs({ state, totalSellingHours, onChange }: SellingTimeInputsProps) {
