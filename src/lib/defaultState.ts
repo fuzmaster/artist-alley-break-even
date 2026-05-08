@@ -1,6 +1,8 @@
 import type { CalculatorState } from '../types/calculator'
 
 export const defaultState: CalculatorState = {
+  conName: 'Sample 3-Day Con',
+  productName: 'items',
   tableFee: 300,
   badgeCost: 60,
   hotelCost: 500,

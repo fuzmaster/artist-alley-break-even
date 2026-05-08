@@ -9,32 +9,42 @@ import { WarningBox } from './components/WarningBox'
 import { calculateResults } from './lib/calculations'
 import { defaultState } from './lib/defaultState'
 import { loadCalculatorState, saveCalculatorState } from './lib/localStorage'
+import { sanitizeState } from './lib/sanitizeState'
 import { buildShareText } from './lib/shareText'
 import type { CalculatorState } from './types/calculator'
 
 const UNREALISTIC_SALES_PER_HOUR_THRESHOLD = 8
-const fieldsWithMinimumOne: Array<keyof CalculatorState> = [
-  'roommateCount',
-  'conDays',
-  'alleyHoursPerDay',
-]
+type NumericField = Exclude<keyof CalculatorState, 'conName' | 'productName'>
 
 function App() {
   const [state, setState] = useState<CalculatorState>(() => {
     const saved = loadCalculatorState()
-    return saved ? { ...defaultState, ...saved } : defaultState
+    return saved ? sanitizeState(saved) : defaultState
   })
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
 
   const results = useMemo(() => calculateResults(state), [state])
 
-  const updateField = (field: keyof CalculatorState, value: number) => {
+  const updateNumberField = (field: NumericField, value: number) => {
     setState((prev) => {
-      const minimum = fieldsWithMinimumOne.includes(field) ? 1 : 0
-      const nextState = {
+      const nextState = sanitizeState({
         ...prev,
-        [field]: Math.max(minimum, Number.isFinite(value) ? value : minimum),
-      }
+        [field]: Number.isFinite(value) ? value : 0,
+      })
+      saveCalculatorState(nextState)
+      return nextState
+    })
+  }
+
+  const updateTextField = (
+    field: Extract<keyof CalculatorState, 'conName' | 'productName'>,
+    value: string,
+  ) => {
+    setState((prev) => {
+      const nextState = sanitizeState({
+        ...prev,
+        [field]: value,
+      })
       saveCalculatorState(nextState)
       return nextState
     })
@@ -52,8 +62,9 @@ function App() {
   }
 
   const handleReset = () => {
-    setState(defaultState)
-    saveCalculatorState(defaultState)
+    const nextState = sanitizeState(defaultState)
+    setState(nextState)
+    saveCalculatorState(nextState)
     setCopyStatus('Reset to defaults.')
   }
 
@@ -68,16 +79,52 @@ function App() {
 
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <section className="order-2 space-y-5 lg:order-1">
-            <CostInputs state={state} onChange={updateField} />
+            <CostInputs state={state} onChange={updateNumberField} />
+            <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+              <h2 className="text-lg font-semibold text-white">Convention Details</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="conName"
+                    className="block text-sm font-medium text-slate-200"
+                  >
+                    Con name
+                  </label>
+                  <input
+                    id="conName"
+                    type="text"
+                    value={state.conName}
+                    onChange={(event) => updateTextField('conName', event.target.value)}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-100 shadow-inner outline-none ring-0 transition focus:border-fuchsia-400"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="productName"
+                    className="block text-sm font-medium text-slate-200"
+                  >
+                    Product name
+                  </label>
+                  <input
+                    id="productName"
+                    type="text"
+                    value={state.productName}
+                    onChange={(event) => updateTextField('productName', event.target.value)}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-100 shadow-inner outline-none ring-0 transition focus:border-fuchsia-400"
+                  />
+                </div>
+              </div>
+            </section>
             <ProductInputs
               state={state}
               profitPerItem={results.profitPerItem}
-              onChange={updateField}
+              onChange={updateNumberField}
+              onProductNameChange={updateTextField}
             />
             <SellingTimeInputs
               state={state}
               totalSellingHours={results.totalSellingHours}
-              onChange={updateField}
+              onChange={updateNumberField}
             />
 
             <ShareSummary
@@ -97,10 +144,13 @@ function App() {
 
           <div className="order-1 lg:order-2 lg:sticky lg:top-6">
             <ResultCard
+              productName={state.productName}
               breakEvenUnits={results.breakEvenUnits}
               salesPerDay={results.salesPerDay}
               salesPerHour={results.salesPerHour}
-              totalCost={results.totalCost}
+              upfrontCashNeeded={results.upfrontCashNeeded}
+              requiredProfitPerHour={results.requiredProfitPerHour}
+              hasInvalidProfit={results.hasInvalidProfit}
             />
           </div>
         </div>

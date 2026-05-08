@@ -1,4 +1,5 @@
 import type { CalculatorState } from '../types/calculator'
+import { sanitizeState } from './sanitizeState'
 
 const STORAGE_KEY = 'artist-alley-break-even-state'
 
@@ -14,12 +15,7 @@ export const loadCalculatorState = (): CalculatorState | null => {
       return null
     }
 
-    return Object.fromEntries(
-      Object.entries(parsed).map(([key, value]) => [
-        key,
-        typeof value === 'number' && Number.isFinite(value) ? value : 0,
-      ]),
-    ) as CalculatorState
+    return sanitizeState(parsed)
   } catch {
     return null
   }

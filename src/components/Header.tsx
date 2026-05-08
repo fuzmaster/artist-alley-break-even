@@ -11,6 +11,10 @@ export function Header() {
         Find out how many prints, charms, stickers, or commissions you need to
         sell to avoid losing money at the con.
       </p>
+      <p className="max-w-2xl text-xs text-slate-400 sm:text-sm">
+        We filled in a sample 3-day con so you can see the math. Replace these
+        with your real numbers.
+      </p>
     </header>
   )
 }

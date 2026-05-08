@@ -11,22 +11,23 @@ export const calculateResults = (state: CalculatorState): CalculationResults => 
   const conDays = safeDivisor(state.conDays)
   const alleyHoursPerDay = safeDivisor(state.alleyHoursPerDay)
 
-  const totalCost =
+  const fixedCosts =
     state.tableFee +
     state.badgeCost +
     state.hotelCost / roommateCount +
     state.travelCost +
     state.foodCost +
     state.displayCost +
-    state.inventoryCost +
     state.emergencyBuffer
+  const upfrontCashNeeded = fixedCosts + state.inventoryCost
 
   const profitPerItem = state.averageSalePrice - state.averageItemCost
   const hasInvalidProfit = profitPerItem <= 0
 
   const breakEvenUnits =
-    hasInvalidProfit || totalCost <= 0 ? 0 : Math.ceil(totalCost / profitPerItem)
+    hasInvalidProfit || fixedCosts <= 0 ? 0 : Math.ceil(fixedCosts / profitPerItem)
   const totalSellingHours = conDays * alleyHoursPerDay
+  const requiredProfitPerHour = fixedCosts / safeDivisor(totalSellingHours)
 
   const salesPerDay = breakEvenUnits > 0 ? breakEvenUnits / conDays : 0
   const salesPerHour =
@@ -35,8 +36,10 @@ export const calculateResults = (state: CalculatorState): CalculationResults => 
       : 0
 
   return {
-    totalCost: safeRound(totalCost),
+    fixedCosts: safeRound(fixedCosts),
+    upfrontCashNeeded: safeRound(upfrontCashNeeded),
     profitPerItem: safeRound(profitPerItem),
+    requiredProfitPerHour: safeRound(requiredProfitPerHour),
     breakEvenUnits,
     salesPerDay: safeRound(salesPerDay),
     salesPerHour: safeRound(salesPerHour),

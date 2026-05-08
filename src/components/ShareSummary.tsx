@@ -21,7 +21,11 @@ export function ShareSummary({ onCopy, onReset, copyStatus }: ShareSummaryProps)
       >
         Reset
       </button>
-      {copyStatus ? <p className="self-center text-sm text-slate-300">{copyStatus}</p> : null}
+      {copyStatus ? (
+        <p aria-live="polite" className="self-center text-sm text-slate-300">
+          {copyStatus}
+        </p>
+      ) : null}
     </section>
   )
 }
