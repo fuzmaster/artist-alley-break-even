@@ -33,7 +33,9 @@ export function ShareCard({
       </p>
       {hasInvalidProfit ? (
         <p className="mt-3 text-sm text-slate-100">
-          At {normalizedConName}, you cannot break even with this {normalizedProductName} price.
+          At {normalizedConName}, you cannot break even with this {normalizedProductName} price
+          because item cost is higher than your sale price. Raise your price or lower production
+          cost before tabling.
         </p>
       ) : (
         <>
