@@ -3,13 +3,14 @@ import type { CalculatorState } from '../types/calculator'
 
 export const sanitizeState = (nextState: Partial<CalculatorState>): CalculatorState => {
   const merged = { ...defaultState, ...nextState }
+  const conName =
+    typeof merged.conName === 'string' ? merged.conName.trim() : ''
+  const productName =
+    typeof merged.productName === 'string' ? merged.productName.trim() : ''
 
   return {
-    conName: typeof merged.conName === 'string' ? merged.conName : defaultState.conName,
-    productName:
-      typeof merged.productName === 'string'
-        ? merged.productName
-        : defaultState.productName,
+    conName: conName || defaultState.conName,
+    productName: productName || defaultState.productName,
     tableFee: Number.isFinite(merged.tableFee) ? Math.max(0, merged.tableFee) : 0,
     badgeCost: Number.isFinite(merged.badgeCost) ? Math.max(0, merged.badgeCost) : 0,
     hotelCost: Number.isFinite(merged.hotelCost) ? Math.max(0, merged.hotelCost) : 0,

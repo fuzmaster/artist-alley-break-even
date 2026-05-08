@@ -20,10 +20,6 @@ export function ResultCard({
   hasInvalidProfit,
 }: ResultCardProps) {
   const normalizedProductName = productName.trim() || 'items'
-  const displayProductName =
-    breakEvenUnits === 1 && normalizedProductName.endsWith('s')
-      ? normalizedProductName.slice(0, -1)
-      : normalizedProductName
 
   return (
     <section className="rounded-2xl border border-fuchsia-500/40 bg-gradient-to-b from-fuchsia-500/20 to-slate-950 p-6 shadow-2xl shadow-fuchsia-900/20">
@@ -41,10 +37,10 @@ export function ResultCard({
       ) : (
         <>
           <p className="mt-3 text-4xl font-black text-white sm:text-5xl">
-            {breakEvenUnits} {displayProductName}
+            {breakEvenUnits} {normalizedProductName}
           </p>
           <div className="mt-5 space-y-2 text-sm text-slate-200">
-            <p>You need to sell {breakEvenUnits} {displayProductName} to break even.</p>
+            <p>You need to sell {breakEvenUnits} {normalizedProductName} to break even.</p>
             <p>That is {salesPerDay} per day.</p>
             <p>That is {salesPerHour} per hour.</p>
           </div>
