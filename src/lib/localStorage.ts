@@ -21,10 +21,11 @@ export const loadCalculatorState = (): CalculatorState | null => {
   }
 }
 
-export const saveCalculatorState = (state: CalculatorState): void => {
+export const saveCalculatorState = (state: CalculatorState): boolean => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    return true
   } catch {
-    // no-op
+    return false
   }
 }
