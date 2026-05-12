@@ -19,6 +19,8 @@ export function NumberInput({
   onChange,
   helperText,
 }: NumberInputProps) {
+  const helperId = helperText ? `${id}-helper` : undefined
+
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextValue = Number.parseFloat(event.target.value)
     onChange(Number.isNaN(nextValue) ? 0 : nextValue)
@@ -37,9 +39,14 @@ export function NumberInput({
         step={step}
         value={value}
         onChange={handleChange}
-        className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-100 shadow-inner outline-none ring-0 transition focus:border-fuchsia-400"
+        aria-describedby={helperId}
+        className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-100 shadow-inner outline-none transition focus:border-fuchsia-400 focus-visible:ring-2 focus-visible:ring-fuchsia-500/40"
       />
-      {helperText ? <p className="text-xs text-slate-400">{helperText}</p> : null}
+      {helperText ? (
+        <p id={helperId} className="text-xs text-slate-400">
+          {helperText}
+        </p>
+      ) : null}
     </div>
   )
 }

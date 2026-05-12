@@ -22,6 +22,22 @@ const getRiskLevel = (salesPerHour: number, hasInvalidProfit: boolean): RiskLeve
   return 'HIGH RISK'
 }
 
+export const calcBreakEvenWithPriceIncrease = (
+  state: CalculatorState,
+  priceIncrease: number,
+): number => {
+  const fixedCosts =
+    state.tableFee +
+    state.badgeCost +
+    state.hotelCost / safeDivisor(state.roommateCount) +
+    state.travelCost +
+    state.foodCost +
+    state.displayCost +
+    state.emergencyBuffer
+  const increasedProfit = state.averageSalePrice + priceIncrease - state.averageItemCost
+  return increasedProfit > 0 && fixedCosts > 0 ? Math.ceil(fixedCosts / increasedProfit) : 0
+}
+
 export const calculateResults = (state: CalculatorState): CalculationResults => {
   const roommateCount = safeDivisor(state.roommateCount)
   const conDays = safeDivisor(state.conDays)
