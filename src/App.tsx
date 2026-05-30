@@ -14,6 +14,7 @@ import { buildShareText } from './lib/shareText'
 import { downloadCsv } from './lib/exportCsv'
 import { trackEvent } from './lib/analytics'
 import { useCalculatorState } from './hooks/useCalculatorState'
+import { JbdFooter } from './components/JbdFooter'
 
 function App() {
   const {
@@ -197,43 +198,9 @@ function App() {
         <p className="text-xs text-slate-500 px-1">
           This calculator is an estimate based on your inputs and is not financial advice.
         </p>
-
-        <footer className="border-t border-[rgba(0,255,200,0.18)] bg-[#0B0D14] -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-6">
-          <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-3">
-            <p className="font-mono text-[0.72rem] uppercase tracking-[0.06em] text-white/50">
-              Built by{' '}
-              <a
-                href="https://jacobbritten.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#00FFC8] no-underline hover:underline"
-              >
-                Jacob Britten
-              </a>{' '}
-              &mdash; Media Systems Architect
-            </p>
-            <nav aria-label="Jacob Britten" className="flex flex-wrap gap-5">
-              {[
-                { href: 'https://jacobbritten.com', label: 'Portfolio' },
-                { href: 'https://jacobbritten.com/projects.html', label: 'Projects' },
-                { href: 'https://jacobbritten.com/lab.html', label: 'The Lab' },
-                { href: 'https://ko-fi.com/jacobbritten', label: 'Ko-fi' },
-                { href: 'https://www.paypal.com/donate/?hosted_button_id=47A4JJ4WNBY9U', label: 'PayPal' },
-              ].map(({ href, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-[0.68rem] uppercase tracking-[0.07em] text-white/70 no-underline transition-colors hover:text-[#00FFC8] focus-visible:text-[#00FFC8] outline-none"
-                >
-                  {label}
-                </a>
-              ))}
-            </nav>
-          </div>
-        </footer>
       </main>
+
+      <JbdFooter />
     </div>
   )
 }
