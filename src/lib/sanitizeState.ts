@@ -1,40 +1,33 @@
 import { defaultState } from './defaultState'
-import type { CalculatorState } from '../types/calculator'
+import type { CalculatorState, ConSize } from '../types/calculator'
 
-export const sanitizeState = (nextState: Partial<CalculatorState>): CalculatorState => {
-  const merged = { ...defaultState, ...nextState }
+const CON_SIZES: ConSize[] = ['small', 'mid', 'major']
+
+function clampNum(v: unknown, min = 0): number {
+  const n = typeof v === 'number' ? v : Number(v)
+  return Number.isFinite(n) ? Math.max(min, n) : min
+}
+
+export const sanitizeState = (next: Partial<CalculatorState>): CalculatorState => {
+  const merged = { ...defaultState, ...next }
+  const con: ConSize = CON_SIZES.includes(merged.con as ConSize)
+    ? (merged.con as ConSize)
+    : defaultState.con
   const conName =
-    typeof merged.conName === 'string' ? merged.conName.trim() : ''
-  const productName =
-    typeof merged.productName === 'string' ? merged.productName.trim() : ''
+    typeof merged.conName === 'string' ? merged.conName.trim().slice(0, 60) : ''
 
   return {
-    conName: conName || defaultState.conName,
-    productName: productName || defaultState.productName,
-    tableFee: Number.isFinite(merged.tableFee) ? Math.max(0, merged.tableFee) : 0,
-    badgeCost: Number.isFinite(merged.badgeCost) ? Math.max(0, merged.badgeCost) : 0,
-    hotelCost: Number.isFinite(merged.hotelCost) ? Math.max(0, merged.hotelCost) : 0,
-    roommateCount: Number.isFinite(merged.roommateCount)
-      ? Math.max(1, merged.roommateCount)
-      : 1,
-    travelCost: Number.isFinite(merged.travelCost) ? Math.max(0, merged.travelCost) : 0,
-    foodCost: Number.isFinite(merged.foodCost) ? Math.max(0, merged.foodCost) : 0,
-    displayCost: Number.isFinite(merged.displayCost) ? Math.max(0, merged.displayCost) : 0,
-    inventoryCost: Number.isFinite(merged.inventoryCost)
-      ? Math.max(0, merged.inventoryCost)
-      : 0,
-    emergencyBuffer: Number.isFinite(merged.emergencyBuffer)
-      ? Math.max(0, merged.emergencyBuffer)
-      : 0,
-    averageSalePrice: Number.isFinite(merged.averageSalePrice)
-      ? Math.max(0, merged.averageSalePrice)
-      : 0,
-    averageItemCost: Number.isFinite(merged.averageItemCost)
-      ? Math.max(0, merged.averageItemCost)
-      : 0,
-    conDays: Number.isFinite(merged.conDays) ? Math.max(1, merged.conDays) : 1,
-    alleyHoursPerDay: Number.isFinite(merged.alleyHoursPerDay)
-      ? Math.max(1, merged.alleyHoursPerDay)
-      : 1,
+    con,
+    conName,
+    days: clampNum(merged.days, 1),
+    hours: clampNum(merged.hours, 1),
+    tableFee: clampNum(merged.tableFee),
+    travel: clampNum(merged.travel),
+    lodgingPerNight: clampNum(merged.lodgingPerNight),
+    nights: clampNum(merged.nights),
+    otherFixed: clampNum(merged.otherFixed),
+    avgSale: clampNum(merged.avgSale),
+    avgCost: clampNum(merged.avgCost),
+    inventorySpend: clampNum(merged.inventorySpend),
   }
 }

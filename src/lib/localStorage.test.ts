@@ -54,11 +54,16 @@ describe('localStorage persistence', () => {
       expect(loaded?.conName).toBe('Test Con')
     })
 
-    it('does not throw when localStorage.setItem throws', () => {
+    it('returns true on success', () => {
+      expect(saveCalculatorState(defaultState)).toBe(true)
+    })
+
+    it('returns false and does not throw when localStorage.setItem throws', () => {
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new Error('quota exceeded')
       })
       expect(() => saveCalculatorState(defaultState)).not.toThrow()
+      expect(saveCalculatorState(defaultState)).toBe(false)
     })
   })
 })

@@ -1,50 +1,44 @@
-import type { CalculatorState } from '../types/calculator'
-import type { CalculationResults } from '../types/calculator'
+import type { CalculatorState, CalculationResults } from '../types/calculator'
+import { CON_PRESETS } from './conPresets'
 
-const row = (label: string, value: string | number) =>
-  `"${label}","${value}"`
+const row = (label: string, value: string | number) => `"${label}","${value}"`
 
 export const buildCsvContent = (state: CalculatorState, results: CalculationResults): string => {
+  const conLabel = CON_PRESETS[state.con].label
   const lines = [
     'Category,Value',
-    row('Con Name', state.conName),
-    row('Product Name', state.productName),
+    row('Con Name', state.conName || '—'),
+    row('Con Size', conLabel),
     '',
-    row('--- Convention Costs ---', ''),
-    row('Table Fee', state.tableFee),
-    row('Badge Cost', state.badgeCost),
-    row('Hotel Cost (total)', state.hotelCost),
-    row('Roommates', state.roommateCount),
-    row('Hotel Cost (your share)', (state.hotelCost / Math.max(1, state.roommateCount)).toFixed(2)),
-    row('Travel Cost', state.travelCost),
-    row('Food Cost', state.foodCost),
-    row('Display Cost', state.displayCost),
-    row('Emergency Buffer', state.emergencyBuffer),
-    row('Inventory Cash Needed', state.inventoryCost),
+    row('--- Time on floor ---', ''),
+    row('Days', state.days),
+    row('Hours / day', state.hours),
+    row('Total selling hours', results.totalHours),
+    '',
+    row('--- Fixed Costs ---', ''),
+    row('Table / booth fee', state.tableFee),
+    row('Travel', state.travel),
+    row('Lodging / night', state.lodgingPerNight),
+    row('Nights', state.nights),
+    row('Lodging total', results.lodging),
+    row('Extras (badge, food, supplies)', state.otherFixed),
+    row('Total fixed costs', results.fixedCosts),
+    row('Inventory spend', state.inventorySpend),
+    row('Total upfront cash', results.upfrontCash),
     '',
     row('--- Product Economics ---', ''),
-    row('Average Sale Price', state.averageSalePrice),
-    row('Average Item Cost', state.averageItemCost),
-    row('Profit Per Item', results.profitPerItem),
-    '',
-    row('--- Selling Time ---', ''),
-    row('Convention Days', state.conDays),
-    row('Alley Hours Per Day', state.alleyHoursPerDay),
-    row('Total Selling Hours', results.totalSellingHours),
+    row('Average sale price', state.avgSale),
+    row('Average cost per sale', state.avgCost),
+    row('Margin per sale', results.margin),
+    row('Margin %', `${results.marginPct.toFixed(1)}%`),
     '',
     row('--- Results ---', ''),
-    row('Fixed Costs to Recoup', results.fixedCosts),
-    row('Upfront Cash Needed', results.upfrontCashNeeded),
-    row('Break-Even Units', results.breakEvenUnits),
-    row('Sales Per Day', results.salesPerDay),
-    row('Sales Per Hour', results.salesPerHour),
-    row('Required Profit Per Hour', results.requiredProfitPerHour),
-    row('Risk Level', results.riskLevel ?? 'N/A'),
-    '',
-    row('--- Price Sensitivity ---', ''),
-    row('Break-Even at +$1', results.breakEvenAtOneDollarMore),
-    row('Break-Even at +$3', results.breakEvenAtThreeDollarsMore),
-    row('Break-Even at +$5', results.breakEvenAtFiveDollarsMore),
+    row('Break-even units', results.losingMoney ? 'Never' : results.breakEvenUnits),
+    row('Sales per day', results.losingMoney ? '—' : results.salesPerDay),
+    row('Sales per hour', results.losingMoney ? '—' : results.salesPerHour),
+    row('Minutes per sale', results.losingMoney ? '—' : results.minutesPerSale),
+    row('Risk level', results.risk),
+    row('In profit', results.beClock ? `${results.beClock.day} · ${results.beClock.time}` : '—'),
   ]
   return lines.join('\n')
 }
@@ -54,7 +48,7 @@ export const downloadCsv = (state: CalculatorState, results: CalculationResults)
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
-  const filename = `${state.conName.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'break-even'}.csv`
+  const filename = `${(state.conName || 'break-even').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.csv`
   link.href = url
   link.download = filename
   link.click()

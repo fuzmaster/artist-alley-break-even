@@ -1,17 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { calculateResults } from '../lib/calculations'
 import { defaultState } from '../lib/defaultState'
 import { loadCalculatorState, saveCalculatorState } from '../lib/localStorage'
 import { loadScenarios, saveScenario, deleteScenario } from '../lib/scenarios'
 import { sanitizeState } from '../lib/sanitizeState'
 import { trackEvent } from '../lib/analytics'
-import type { CalculatorState } from '../types/calculator'
+import { CON_PRESETS } from '../lib/conPresets'
+import type { CalculatorState, ConSize } from '../types/calculator'
 import type { SavedScenario } from '../lib/scenarios'
-
-type NumericField = Exclude<keyof CalculatorState, 'conName' | 'productName'>
-
-const UNREALISTIC_SALES_PER_HOUR_THRESHOLD = 8
-const HIGH_RISK_LEVEL = 'HIGH RISK'
 
 export function useCalculatorState() {
   const [state, setState] = useState<CalculatorState>(() => {
@@ -20,71 +16,56 @@ export function useCalculatorState() {
   })
   const [saveError, setSaveError] = useState(false)
   const [scenarios, setScenarios] = useState<SavedScenario[]>(() => loadScenarios())
-  const hasTrackedHighRiskRef = useRef(false)
+  const [pendingCon, setPendingCon] = useState<ConSize | null>(null)
 
   const results = useMemo(() => calculateResults(state), [state])
 
-  useEffect(() => {
-    if (results.riskLevel === HIGH_RISK_LEVEL && !hasTrackedHighRiskRef.current) {
-      trackEvent('high_risk_result', {
-        salesPerHour: results.salesPerHour,
-        requiredProfitPerHour: results.requiredProfitPerHour,
-        breakEvenUnits: results.breakEvenUnits,
-      })
-      hasTrackedHighRiskRef.current = true
-      return
-    }
-
-    if (results.riskLevel !== HIGH_RISK_LEVEL) {
-      hasTrackedHighRiskRef.current = false
-    }
-  }, [results.breakEvenUnits, results.requiredProfitPerHour, results.riskLevel, results.salesPerHour])
-
-  const persistState = (nextState: CalculatorState) => {
-    const saved = saveCalculatorState(nextState)
-    setSaveError(!saved)
+  const persist = (next: CalculatorState) => {
+    const ok = saveCalculatorState(next)
+    setSaveError(!ok)
   }
 
-  const updateNumberField = (field: NumericField, value: number) => {
+  const setField = <K extends keyof CalculatorState>(field: K, value: CalculatorState[K]) => {
     setState((prev) => {
-      const nextState = sanitizeState({
-        ...prev,
-        [field]: Number.isFinite(value) ? value : 0,
-      })
-      persistState(nextState)
-      return nextState
+      const next = sanitizeState({ ...prev, [field]: value })
+      persist(next)
+      return next
     })
   }
 
-  const updateTextField = (
-    field: Extract<keyof CalculatorState, 'conName' | 'productName'>,
-    value: string,
-  ) => {
-    setState((prev) => {
-      const nextState = sanitizeState({ ...prev, [field]: value })
-      persistState(nextState)
-      return nextState
-    })
+  const setNum = (field: keyof CalculatorState, value: number) => {
+    setField(field, (Number.isFinite(value) ? value : 0) as CalculatorState[typeof field])
   }
 
-  const handlePresetSelect = (
-    productName: string,
-    averageSalePrice: number,
-    averageItemCost: number,
-  ) => {
-    trackEvent('preset_selected', { productName, averageSalePrice, averageItemCost })
+  const pickCon = (con: ConSize) => {
+    if (con === state.con) return
     setState((prev) => {
-      const nextState = sanitizeState({ ...prev, productName, averageSalePrice, averageItemCost })
-      persistState(nextState)
-      return nextState
+      const next = sanitizeState({ ...prev, con })
+      persist(next)
+      return next
     })
+    setPendingCon(con)
   }
+
+  const loadCon = (con: ConSize) => {
+    const { label: _l, blurb: _b, pace: _p, ...vals } = CON_PRESETS[con]
+    setState((prev) => {
+      const next = sanitizeState({ ...prev, con, ...vals })
+      persist(next)
+      return next
+    })
+    setPendingCon(null)
+    trackEvent('preset_loaded', { con })
+  }
+
+  const dismissPendingCon = () => setPendingCon(null)
 
   const handleReset = () => {
     trackEvent('reset_clicked')
-    const nextState = sanitizeState(defaultState)
-    setState(nextState)
-    persistState(nextState)
+    const next = sanitizeState(defaultState)
+    setState(next)
+    persist(next)
+    setPendingCon(null)
   }
 
   const handleSaveScenario = (name: string) => {
@@ -93,9 +74,9 @@ export function useCalculatorState() {
   }
 
   const handleLoadScenario = (scenario: SavedScenario) => {
-    const nextState = sanitizeState(scenario.state)
-    setState(nextState)
-    persistState(nextState)
+    const next = sanitizeState(scenario.state)
+    setState(next)
+    persist(next)
   }
 
   const handleDeleteScenario = (id: string) => {
@@ -104,25 +85,14 @@ export function useCalculatorState() {
   }
 
   const warnings = {
-    zeroPriceWarning: state.averageSalePrice === 0,
-    zeroCostWarning: state.averageItemCost === 0 && state.averageSalePrice > 0,
-    unrealisticPaceWarning:
-      !results.hasInvalidProfit &&
-      results.salesPerHour >= UNREALISTIC_SALES_PER_HOUR_THRESHOLD,
+    losingMoney: results.losingMoney,
+    zeroPriceWarning: state.avgSale === 0,
+    highRisk: results.risk === 'HIGH' && !results.losingMoney,
   }
 
   return {
-    state,
-    results,
-    saveError,
-    scenarios,
-    warnings,
-    updateNumberField,
-    updateTextField,
-    handlePresetSelect,
-    handleReset,
-    handleSaveScenario,
-    handleLoadScenario,
-    handleDeleteScenario,
+    state, results, saveError, scenarios, pendingCon, warnings,
+    setNum, setField, pickCon, loadCon, dismissPendingCon,
+    handleReset, handleSaveScenario, handleLoadScenario, handleDeleteScenario,
   }
 }

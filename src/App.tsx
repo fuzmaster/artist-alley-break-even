@@ -1,51 +1,36 @@
 import { useState } from 'react'
-import { Header } from './components/Header'
-import { ResultCard } from './components/ResultCard'
-import { CostInputs } from './components/CostInputs'
-import { ProductInputs } from './components/ProductInputs'
-import { SellingTimeInputs } from './components/SellingTimeInputs'
-import { ShareSummary } from './components/ShareSummary'
-import { ShareCard } from './components/ShareCard'
-import { PricingInsight } from './components/PricingInsight'
-import { WarningBox } from './components/WarningBox'
+import { BackgroundScene } from './components/BackgroundScene'
+import { Receipt } from './components/Receipt'
+import { ConPresetPicker } from './components/ConPresetPicker'
+import { FieldGroup } from './components/FieldGroup'
+import { MoneyInput } from './components/MoneyInput'
+import { PlainNumber } from './components/PlainNumber'
+import { RangeNumber } from './components/RangeNumber'
 import { ScenarioManager } from './components/ScenarioManager'
-import { calcBreakEvenWithPriceIncrease } from './lib/calculations'
-import { buildShareText } from './lib/shareText'
+import { JbdFooter } from './components/JbdFooter'
 import { downloadCsv } from './lib/exportCsv'
+import { buildShareText } from './lib/shareText'
 import { trackEvent } from './lib/analytics'
 import { useCalculatorState } from './hooks/useCalculatorState'
-import { JbdFooter } from './components/JbdFooter'
 
 function App() {
   const {
-    state,
-    results,
-    saveError,
-    scenarios,
-    warnings,
-    updateNumberField,
-    updateTextField,
-    handlePresetSelect,
-    handleReset,
-    handleSaveScenario,
-    handleLoadScenario,
-    handleDeleteScenario,
+    state, results, saveError, scenarios, pendingCon, warnings,
+    setNum, setField, pickCon, loadCon, dismissPendingCon,
+    handleReset, handleSaveScenario, handleLoadScenario, handleDeleteScenario,
   } = useCalculatorState()
 
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
-  const handleCopySummary = async () => {
-    trackEvent('copy_summary_clicked', {
-      conName: state.conName,
-      productName: state.productName,
-      breakEvenUnits: results.breakEvenUnits,
-    })
-    const shareText = buildShareText(state, results)
+  const handleCopy = async () => {
+    trackEvent('copy_summary_clicked', { conName: state.conName })
     try {
-      await navigator.clipboard.writeText(shareText)
-      setCopyStatus('Summary copied to clipboard.')
+      await navigator.clipboard.writeText(buildShareText(state, results))
+      setCopyStatus('Copied!')
+      setTimeout(() => setCopyStatus(null), 1800)
     } catch {
-      setCopyStatus('Clipboard not available in this browser.')
+      setCopyStatus('Clipboard unavailable')
     }
   }
 
@@ -54,151 +39,244 @@ function App() {
     downloadCsv(state, results)
   }
 
-  const handleResetWithStatus = () => {
-    handleReset()
-    setCopyStatus('Reset to defaults.')
-  }
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <main aria-label="Artist Alley Break-Even Calculator" className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <Header />
+    <div className="shell">
+      <BackgroundScene />
 
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="order-2 space-y-5 lg:order-1">
-            <CostInputs state={state} onChange={updateNumberField} />
-            <ScenarioManager
-              currentState={state}
-              scenarios={scenarios}
-              onSave={handleSaveScenario}
-              onLoad={handleLoadScenario}
-              onDelete={handleDeleteScenario}
-            />
-            <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-              <h2 className="text-lg font-semibold text-white">Convention Details</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label htmlFor="conName" className="block text-sm font-medium text-slate-200">
-                    Con name
-                  </label>
-                  <input
-                    id="conName"
-                    type="text"
-                    value={state.conName}
-                    onChange={(event) => updateTextField('conName', event.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-100 shadow-inner outline-none transition focus:border-fuchsia-400 focus-visible:ring-2 focus-visible:ring-fuchsia-500/40"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="productName" className="block text-sm font-medium text-slate-200">
-                    Product name
-                  </label>
-                  <input
-                    id="productName"
-                    type="text"
-                    value={state.productName}
-                    onChange={(event) => updateTextField('productName', event.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-100 shadow-inner outline-none transition focus:border-fuchsia-400 focus-visible:ring-2 focus-visible:ring-fuchsia-500/40"
-                  />
-                </div>
-              </div>
-            </section>
-            <ProductInputs
-              state={state}
-              profitPerItem={results.profitPerItem}
-              onChange={updateNumberField}
-              onPresetSelect={handlePresetSelect}
-            />
-            <SellingTimeInputs
-              state={state}
-              totalSellingHours={results.totalSellingHours}
-              onChange={updateNumberField}
-            />
-
-            <ShareSummary
-              onCopy={handleCopySummary}
-              onReset={handleResetWithStatus}
-              onExportCsv={handleExportCsv}
-              copyStatus={copyStatus}
-            />
-
-            {warnings.zeroPriceWarning ? (
-              <WarningBox message="Sale price is $0. Enter a price to calculate your break-even." />
-            ) : null}
-
-            {warnings.zeroCostWarning ? (
-              <WarningBox message="Production cost is $0. Double-check this — free items are rare." />
-            ) : null}
-
-            {results.hasInvalidProfit ? (
-              <WarningBox message="You lose money on every sale. Raise your price or lower your production cost before tabling." />
-            ) : null}
-
-            {warnings.unrealisticPaceWarning ? (
-              <WarningBox message="This sales pace may be unrealistic. Consider raising prices, lowering costs, or skipping this con." />
-            ) : null}
-
-            {saveError ? (
-              <WarningBox message="Your changes couldn't be saved — browser storage may be full or blocked. Changes will be lost on refresh." />
-            ) : null}
-          </section>
-
-          <div className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-6">
-            <ResultCard
-              productName={state.productName}
-              breakEvenUnits={results.breakEvenUnits}
-              salesPerDay={results.salesPerDay}
-              salesPerHour={results.salesPerHour}
-              upfrontCashNeeded={results.upfrontCashNeeded}
-              requiredProfitPerHour={results.requiredProfitPerHour}
-              hasInvalidProfit={results.hasInvalidProfit}
-              riskLevel={results.riskLevel}
-            />
-            <ShareCard
-              conName={state.conName}
-              productName={state.productName}
-              breakEvenUnits={results.breakEvenUnits}
-              salesPerDay={results.salesPerDay}
-              salesPerHour={results.salesPerHour}
-              requiredProfitPerHour={results.requiredProfitPerHour}
-              upfrontCashNeeded={results.upfrontCashNeeded}
-              profitPerItem={results.profitPerItem}
-              hasInvalidProfit={results.hasInvalidProfit}
-            />
-            <PricingInsight
-              breakEvenUnits={results.breakEvenUnits}
-              breakEvenAtOneDollarMore={results.breakEvenAtOneDollarMore}
-              breakEvenAtThreeDollarsMore={results.breakEvenAtThreeDollarsMore}
-              breakEvenAtFiveDollarsMore={results.breakEvenAtFiveDollarsMore}
-              profitPerItem={results.profitPerItem}
-              onCalculateCustomDelta={(delta) => calcBreakEvenWithPriceIncrease(state, delta)}
-            />
-            <section className="rounded-2xl border border-slate-700 bg-slate-900/80 p-5 text-sm text-slate-200">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Why inventory is separate from break-even math
-              </p>
-              <div className="mt-2 space-y-1">
-                <p>Item cost is already counted in profit per sale, so break-even units use your fixed costs only.</p>
-                <p>Inventory cash is still real money you need upfront before the event starts.</p>
-              </div>
-            </section>
+      {/* top bar */}
+      <header className="wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 20px 0', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div className="mark" aria-hidden="true">✦</div>
+          <div style={{ lineHeight: 1.05 }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.01em' }}>Artist Alley</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>Break&#8209;Even Calc</div>
           </div>
         </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {saveError && (
+            <span style={{ fontSize: 12, color: 'var(--rose)', fontFamily: 'var(--font-mono)' }}>
+              ⚠ Save failed
+            </span>
+          )}
+          <button className="btn btn--ghost btn--sm" type="button" onClick={handleReset}>↺ Reset</button>
+        </div>
+      </header>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-          <h2 className="text-lg font-semibold text-white">Quick Artist Alley Pricing Rules</h2>
-          <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            <li>• Low-margin items need volume.</li>
-            <li>• High table costs require higher-price items or bundles.</li>
-            <li>• Track profit, not just revenue.</li>
-            <li>• If your required sales per hour feels impossible, skip the con or raise prices.</li>
-          </ul>
-        </section>
-
-        <p className="text-xs text-slate-500 px-1">
-          This calculator is an estimate based on your inputs and is not financial advice.
+      {/* hero */}
+      <section className="wrap" style={{ paddingTop: 40, paddingBottom: 8, position: 'relative', zIndex: 1 }}>
+        <span className="kicker-pill">◆ Plan the table before you book the room</span>
+        <h1 className="display" style={{ fontSize: 'clamp(38px,7vw,72px)', margin: '20px 0 0', maxWidth: 760 }}>
+          Will your table{' '}
+          <span style={{ position: 'relative', whiteSpace: 'nowrap' }}>
+            <span style={{ position: 'relative', zIndex: 1 }}>make rent?</span>
+            <span style={{ position: 'absolute', left: -2, right: -2, bottom: 6, height: 14, background: 'var(--accent-soft)', transform: 'skewX(-10deg)', zIndex: 0 }} aria-hidden="true" />
+          </span>
+        </h1>
+        <p style={{ fontSize: 'clamp(15px,2.4vw,19px)', color: 'var(--text-dim)', maxWidth: 560, marginTop: 18, marginBottom: 0 }}>
+          Add your con costs and what you charge. Get the exact number of sales you need to break even — before you put down a deposit.
         </p>
-      </main>
+      </section>
+
+      {/* main tool */}
+      <section className="wrap" style={{ paddingTop: 22, paddingBottom: 40, position: 'relative', zIndex: 1 }}>
+        <div className="aa-grid">
+
+          {/* ── LEFT: form ── */}
+          <form className="card" style={{ padding: '22px 22px 26px' }} onSubmit={(e) => e.preventDefault()}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20, margin: '0 0 2px' }}>Your numbers</h2>
+            <p style={{ fontSize: 13.5, color: 'var(--text-dim)', margin: 0 }}>
+              Round figures are fine — adjust the sliders and the receipt updates live.
+            </p>
+
+            <FieldGroup index="1" title="Which con?">
+              <ConPresetPicker
+                value={state.con}
+                pending={pendingCon}
+                onPick={pickCon}
+                onLoad={loadCon}
+                onKeep={dismissPendingCon}
+              />
+              <div>
+                <label htmlFor="conName" className="field-label">Con name (optional)</label>
+                <div className="input-wrap">
+                  <input
+                    id="conName"
+                    className="field-input"
+                    type="text"
+                    value={state.conName}
+                    placeholder="e.g. Anime Expo 2026"
+                    maxLength={60}
+                    onChange={(e) => setField('conName', e.target.value)}
+                  />
+                </div>
+              </div>
+            </FieldGroup>
+
+            <FieldGroup index="2" title="Time on the floor">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <PlainNumber
+                  label="Days" value={state.days} min={1} step={1}
+                  onChange={(v) => setNum('days', v)}
+                />
+                <PlainNumber
+                  label="Hours / day" value={state.hours} min={1} step={1} suffix="hr"
+                  onChange={(v) => setNum('hours', v)}
+                />
+              </div>
+            </FieldGroup>
+
+            <FieldGroup index="3" title="Fixed costs">
+              <MoneyInput
+                label="Table / booth fee"
+                value={state.tableFee}
+                onChange={(v) => setNum('tableFee', v)}
+              />
+              <MoneyInput
+                label="Travel (gas, flights, parking)"
+                value={state.travel}
+                onChange={(v) => setNum('travel', v)}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 14 }}>
+                <MoneyInput
+                  label="Lodging / night"
+                  value={state.lodgingPerNight}
+                  onChange={(v) => setNum('lodgingPerNight', v)}
+                />
+                <PlainNumber
+                  label="Nights" value={state.nights} min={0} step={1}
+                  onChange={(v) => setNum('nights', v)}
+                />
+              </div>
+              <MoneyInput
+                label="Extras (badge, food, supplies)"
+                value={state.otherFixed}
+                onChange={(v) => setNum('otherFixed', v)}
+                hint="The little stuff that adds up: tape, grids, snacks, a hotel coffee."
+              />
+            </FieldGroup>
+
+            <FieldGroup index="4" title="What you charge">
+              <RangeNumber
+                label="Average sale" value={state.avgSale}
+                min={1} max={200} step={1} prefix="$"
+                onChange={(v) => setNum('avgSale', v)}
+                hint="Use a weighted average if you sell a mix of price points."
+              />
+              <RangeNumber
+                label="Materials / sale" value={state.avgCost}
+                min={0} max={100} step={0.5} prefix="$"
+                onChange={(v) => setNum('avgCost', v)}
+                hint="Your hard cost to produce one unit — printing, resin, packaging."
+              />
+            </FieldGroup>
+
+            <FieldGroup index="5" title="Inventory">
+              <MoneyInput
+                label="Inventory cash needed"
+                value={state.inventorySpend}
+                onChange={(v) => setNum('inventorySpend', v)}
+                hint="Upfront spend to stock your table. Not part of break-even math — just adds to your total cash-out."
+              />
+            </FieldGroup>
+
+            {warnings.losingMoney && (
+              <div className="note note--warn" style={{ marginTop: 16 }}>
+                <strong>You lose money on every sale.</strong> Your cost exceeds your price — raise the price or lower materials before tabling.
+              </div>
+            )}
+            {warnings.zeroPriceWarning && !warnings.losingMoney && (
+              <div className="note note--warn" style={{ marginTop: 16 }}>
+                Sale price is $0. Enter a price to calculate your break-even.
+              </div>
+            )}
+            {warnings.highRisk && (
+              <div className="note note--warn" style={{ marginTop: 16 }}>
+                <strong>High risk.</strong> The required pace is tough for this size of con. Consider raising prices or skipping this one.
+              </div>
+            )}
+
+            {/* actions */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 22 }}>
+              <button className="btn btn--ghost btn--sm" type="button" onClick={handleCopy}>
+                {copyStatus ?? 'Copy summary'}
+              </button>
+              <button className="btn btn--ghost btn--sm" type="button" onClick={handleExportCsv}>
+                Download CSV
+              </button>
+            </div>
+          </form>
+
+          {/* ── RIGHT: receipt (desktop) ── */}
+          <div className="hide-mob" style={{ position: 'sticky', top: 24 }}>
+            <Receipt state={state} results={results} />
+            <div style={{ marginTop: 20 }}>
+              <ScenarioManager
+                currentState={state}
+                scenarios={scenarios}
+                onSave={handleSaveScenario}
+                onLoad={handleLoadScenario}
+                onDelete={handleDeleteScenario}
+              />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* pricing rules */}
+      <section className="wrap" style={{ paddingBottom: 32, position: 'relative', zIndex: 1 }}>
+        <div style={{
+          background: 'linear-gradient(180deg, var(--panel), var(--panel-2))',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)',
+          padding: '20px 24px',
+        }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, margin: '0 0 12px' }}>
+            Quick Artist Alley rules
+          </h2>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 8 }}>
+            {[
+              'Low-margin items need volume — high-margin items need fewer sales.',
+              'If your required sales/hour feels impossible, skip the con or raise prices.',
+              'Track margin, not just revenue. Busy days with bad margins are still losses.',
+              'Hotel split and travel are often the hidden killers for small cons.',
+            ].map((rule) => (
+              <li key={rule} style={{ fontSize: 14, color: 'var(--text-dim)', display: 'flex', gap: 10 }}>
+                <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>◆</span>
+                {rule}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── MOBILE: bottom sheet receipt ── */}
+      <div className="show-mob">
+        <div
+          className={`sheet-backdrop${sheetOpen ? ' open' : ''}`}
+          onClick={() => setSheetOpen(false)}
+          aria-hidden="true"
+        />
+        <div className={`sheet${sheetOpen ? ' open' : ''}`} style={{ '--peek': '92px' } as React.CSSProperties}>
+          <div className="sheet-card">
+            <div className="sheet-grip" />
+            <div className="sheet-peek" onClick={() => setSheetOpen((v) => !v)} style={{ cursor: 'pointer' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className={`risk-dot risk-${results.risk}`} />
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15 }}>
+                  {results.losingMoney ? 'Can\'t break even' : `${results.breakEvenUnits} sales to break even`}
+                </span>
+              </div>
+              <span className={`risk-text-${results.risk}`} style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.1em' }}>
+                {results.risk} RISK {sheetOpen ? '▾' : '▴'}
+              </span>
+            </div>
+            <div style={{ padding: '0 16px 24px' }}>
+              <Receipt state={state} results={results} />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <JbdFooter />
     </div>

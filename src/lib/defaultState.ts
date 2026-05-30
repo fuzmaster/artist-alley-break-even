@@ -1,19 +1,10 @@
 import type { CalculatorState } from '../types/calculator'
+import { CON_PRESETS } from './conPresets'
+
+const { label: _l, blurb: _b, pace: _p, ...midVals } = CON_PRESETS.mid
 
 export const defaultState: CalculatorState = {
-  conName: 'Sample 3-Day Con',
-  productName: 'items',
-  tableFee: 300,
-  badgeCost: 60,
-  hotelCost: 500,
-  roommateCount: 2,
-  travelCost: 120,
-  foodCost: 100,
-  displayCost: 150,
-  inventoryCost: 450,
-  emergencyBuffer: 150,
-  averageSalePrice: 12,
-  averageItemCost: 4,
-  conDays: 3,
-  alleyHoursPerDay: 8,
+  con: 'mid',
+  conName: '',
+  ...midVals,
 }
