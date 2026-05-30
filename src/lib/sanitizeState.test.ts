@@ -4,59 +4,53 @@ import { defaultState } from './defaultState'
 
 describe('sanitizeState', () => {
   it('returns defaults for empty input', () => {
-    const result = sanitizeState({})
-    expect(result).toEqual(defaultState)
+    expect(sanitizeState({})).toEqual(defaultState)
   })
 
-  it('clamps roommateCount to minimum of 1', () => {
-    expect(sanitizeState({ roommateCount: 0 }).roommateCount).toBe(1)
-    expect(sanitizeState({ roommateCount: -5 }).roommateCount).toBe(1)
+  it('clamps days to min 1', () => {
+    expect(sanitizeState({ days: 0 }).days).toBe(1)
+    expect(sanitizeState({ days: -3 }).days).toBe(1)
   })
 
-  it('clamps conDays to minimum of 1', () => {
-    expect(sanitizeState({ conDays: 0 }).conDays).toBe(1)
-    expect(sanitizeState({ conDays: -1 }).conDays).toBe(1)
+  it('clamps hours to min 1', () => {
+    expect(sanitizeState({ hours: 0 }).hours).toBe(1)
   })
 
-  it('clamps alleyHoursPerDay to minimum of 1', () => {
-    expect(sanitizeState({ alleyHoursPerDay: 0 }).alleyHoursPerDay).toBe(1)
-  })
-
-  it('clamps all cost fields to minimum of 0', () => {
-    const fields = ['tableFee', 'badgeCost', 'hotelCost', 'travelCost', 'foodCost', 'displayCost', 'inventoryCost', 'emergencyBuffer', 'averageSalePrice', 'averageItemCost'] as const
-    for (const field of fields) {
-      expect(sanitizeState({ [field]: -100 })[field]).toBe(0)
+  it('clamps all cost fields to 0', () => {
+    const fields = ['tableFee','travel','lodgingPerNight','nights','otherFixed','avgSale','avgCost','inventorySpend'] as const
+    for (const f of fields) {
+      expect(sanitizeState({ [f]: -99 })[f]).toBe(0)
     }
   })
 
-  it('passes through valid numbers unchanged', () => {
-    const state = sanitizeState({ tableFee: 350.5, conDays: 2, roommateCount: 3 })
-    expect(state.tableFee).toBe(350.5)
-    expect(state.conDays).toBe(2)
-    expect(state.roommateCount).toBe(3)
+  it('passes valid numbers through', () => {
+    const s = sanitizeState({ tableFee: 350, days: 3, nights: 2 })
+    expect(s.tableFee).toBe(350)
+    expect(s.days).toBe(3)
+    expect(s.nights).toBe(2)
   })
 
-  it('replaces NaN/Infinity with 0 for numeric fields', () => {
+  it('replaces NaN/Infinity with 0', () => {
     expect(sanitizeState({ tableFee: NaN }).tableFee).toBe(0)
     expect(sanitizeState({ tableFee: Infinity }).tableFee).toBe(0)
-    expect(sanitizeState({ tableFee: -Infinity }).tableFee).toBe(0)
   })
 
-  it('falls back to default conName when empty string provided', () => {
-    expect(sanitizeState({ conName: '' }).conName).toBe(defaultState.conName)
+  it('accepts valid con sizes', () => {
+    expect(sanitizeState({ con: 'small' }).con).toBe('small')
+    expect(sanitizeState({ con: 'mid' }).con).toBe('mid')
+    expect(sanitizeState({ con: 'major' }).con).toBe('major')
   })
 
-  it('falls back to default productName when empty string provided', () => {
-    expect(sanitizeState({ productName: '' }).productName).toBe(defaultState.productName)
+  it('falls back to default con size for invalid values', () => {
+    expect(sanitizeState({ con: 'invalid' as 'small' }).con).toBe(defaultState.con)
   })
 
-  it('trims whitespace from string fields', () => {
+  it('trims conName', () => {
     expect(sanitizeState({ conName: '  My Con  ' }).conName).toBe('My Con')
-    expect(sanitizeState({ productName: '  Prints  ' }).productName).toBe('Prints')
   })
 
-  it('handles non-string values for text fields gracefully', () => {
-    expect(sanitizeState({ conName: undefined }).conName).toBe(defaultState.conName)
-    expect(sanitizeState({ productName: null as unknown as string }).productName).toBe(defaultState.productName)
+  it('clamps conName to 60 chars', () => {
+    const long = 'A'.repeat(100)
+    expect(sanitizeState({ conName: long }).conName).toHaveLength(60)
   })
 })
